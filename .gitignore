@@ -1,0 +1,7 @@
+venv
+.idea
+__pycache__/
+*.py[cod]
+*$py.class
+*.xml
+shelve.db
