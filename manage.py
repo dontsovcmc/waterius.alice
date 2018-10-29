@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 import json
 import traceback
 from flask import Flask, request, render_template
-from dialog import handle_dialog, logging, pp
+from dialog import handle_dialog, pp
 from mos_api import mos_api
 from emp_mos_api import AuthException
 from storage import db
+from logger import log
 import settings
 
 application = Flask(__name__)
@@ -15,7 +16,7 @@ application = Flask(__name__)
 
 @application.route("/alice-webhook", methods=['POST'])
 def main():
-    logging.info('Request: %r', pp.pprint(request.json))
+    log.info('Request: %r', pp.pprint(request.json))
 
     response = {
         "version": request.json['version'],
@@ -28,10 +29,10 @@ def main():
     try:
         handle_dialog(request.json, response)
     except Exception as err:
-        logging.error('{}'.format(traceback.format_exc()))
+        log.error('{}'.format(traceback.format_exc()))
         response['response']['text'] = 'Что-то пошло не так'
 
-    logging.info('Response: %r', pp.pprint(response))
+        log.info('Response: %r', pp.pprint(response))
 
     return json.dumps(
         response,

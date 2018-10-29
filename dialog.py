@@ -1,14 +1,15 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-import logging
+from requests import post, session
+import traceback
+from logger import log
 import pprint
 from mos_api import mos_api
 from emp_mos_api import AuthException, Water, Watercounter
 import settings
 
 pp = pprint.PrettyPrinter(indent=4)
-logging.basicConfig(level=logging.DEBUG)
 
 # Хранилище данных о пользователях.
 from storage import db
@@ -54,7 +55,7 @@ def handle_dialog(req, res):
         client = mos_api.client(user_id)
         if not client.is_active():
             client.login(db.get_username(user_id), db.get_password(user_id))
-            logging.info('login OK: ' + db.get_username(user_id))
+            log.info('login OK: ' + db.get_username(user_id))
 
     handle_send(req, res)
 
@@ -136,11 +137,11 @@ def handle_send(req, res):
                 res['response']['text'] += 'Добавь в приложение счетчики'
 
         except AuthException as err:
-            logging.error(err)
+            log.error(err)
             res['response']['text'] += 'Что-то не то с авторизацией. Повтори ее.'
             res['response']['buttons'] = [auth_button(user_id)]
         except Exception as err:
-            logging.error(err)
+            log.error('{}'.format(traceback.format_exc()))
             res['response']['text'] = 'Я не шмогла.'
 
     else:
