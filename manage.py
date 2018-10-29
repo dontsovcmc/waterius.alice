@@ -66,4 +66,4 @@ def mos_login_page(user_id):
 
 
 if __name__ == '__main__':
-    application.run(debug=True, host=settings.HOST, port=settings.PORT)
+    application.run(debug=settings.DEBUG, host=settings.HOST, port=settings.PORT)
