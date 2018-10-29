@@ -68,7 +68,7 @@ def read_user_watercounters(user_id):
     """
     client = mos_api.client(user_id)
 
-    f = db.get_flat(user_id) or client.get_flats(user_id)[0]
+    f = db.get_flat(user_id) or client.get_flats()[0]
     db.set_flat(user_id, f)
 
     wc = db.get(user_id, 'wc') or client.get_watercounters(f['flat_id'])['counters']
