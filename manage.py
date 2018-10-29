@@ -11,10 +11,10 @@ from storage import db
 from logger import log
 import settings
 
-application = Flask(__name__)
+app = Flask(__name__)
 
 
-@application.route("/alice-webhook", methods=['POST'])
+@app.route("/alice-webhook", methods=['POST'])
 def main():
     log.info('Request: %r', pp.pprint(request.json))
 
@@ -41,7 +41,7 @@ def main():
     )
 
 
-@application.route("/alice-webhook/mos_login_page/<user_id>", methods=['GET', 'POST'])
+@app.route("/alice-webhook/mos_login_page/<user_id>", methods=['GET', 'POST'])
 def mos_login_page(user_id):
     if request.method == 'GET':
         return render_template('mos_login_page.html', show_form=True)
@@ -67,4 +67,4 @@ def mos_login_page(user_id):
 
 
 if __name__ == '__main__':
-    application.run(debug=settings.DEBUG, host=settings.HOST, port=settings.PORT)
+    app.run(debug=settings.DEBUG, host=settings.HOST, port=settings.PORT)
