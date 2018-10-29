@@ -49,11 +49,12 @@ def mos_login_page(user_id):
         try:
             username = request.form.get('username')
             password = request.form.get('password')
-            mos_api.login(username, password, user_id)
+            client = mos_api.client(user_id)
+            client.login(username, password, user_id)
             db.set(user_id, 'username', username)
             db.set(user_id, 'password', password)
 
-            mos_api.logout(user_id)
+            #client.logout(user_id)
             return render_template('mos_login_page.html', show_form=False,
                                    message='Успех! Теперь вы можете попросить Алису отправить показания')
         except AuthException as err:
@@ -65,4 +66,4 @@ def mos_login_page(user_id):
 
 
 if __name__ == '__main__':
-    application.run(debug=True, host=settings.HOST, port=settings.port)
+    application.run(debug=True, host=settings.HOST, port=settings.PORT)
