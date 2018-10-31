@@ -5,7 +5,7 @@ from requests import post, session
 import traceback
 from logger import log
 import pprint
-from mos_api import mos_api
+from mos_api import api
 from emp_mos_api import AuthException, Water, Watercounter
 import settings
 
@@ -49,13 +49,14 @@ def handle_dialog(req, res):
         return
 
     if not db.get_username(user_id) or not db.get_password(user_id):
-        res['response']['text'] += 'Для отправки показаний мне не хватает логина. Введи его вручную.'
+        res['response']['text'] += 'Я должна знать твой логин и пароль. Нажми на кнопку и авторизируйся.'
         res['response']['buttons'] = [auth_button(user_id)]
+        return
     else:
-        client = mos_api.client(user_id)
+        client = api.client(user_id)
         if not client.is_active():
             client.login(db.get_username(user_id), db.get_password(user_id))
-            log.info('login OK: ' + db.get_username(user_id))
+            #log.info('login OK: ' + db.get_username(user_id))
 
     handle_send(req, res)
 
@@ -66,22 +67,27 @@ def read_user_watercounters(user_id):
     :param user_id:
     :return:
     """
-    client = mos_api.client(user_id)
+    client = api.client(user_id)
 
     f = db.get_flat(user_id) or client.get_flats()[0]
     db.set_flat(user_id, f)
 
     wc = db.get(user_id, 'wc') or client.get_watercounters(f['flat_id'])['counters']
-    cold = list(filter(lambda x: x['type'] == Water.COLD, wc))
-    hot = list(filter(lambda x: x['type'] == Water.HOT, wc))
-    db.set_cold(user_id, cold)
-    db.set_hot(user_id, hot)
-    return cold, hot
+
+    if wc:
+        cold = list(filter(lambda x: x['type'] == Water.COLD, wc))
+        hot = list(filter(lambda x: x['type'] == Water.HOT, wc))
+        db.set_cold(user_id, cold)
+        db.set_hot(user_id, hot)
+        return cold, hot
+    else:
+        return None, None
+
 
 
 def handle_send(req, res):
     user_id = req['session']['user_id']
-    client = mos_api.client(user_id)
+    client = api.client(user_id)
     tokens = req['request']['nlu']['tokens']
 
     if db.get_out(user_id):
@@ -91,6 +97,7 @@ def handle_send(req, res):
             #client.send_watercounters(db.get_flat(user_id)['flat_id'], db.get_out(user_id))
             db.delete_out(user_id)
             res['response']['text'] += 'Отправлено. Жду новых команд.'
+            return
 
         elif [t for t in tokens if t in ['отмена',
                                          'нет',
@@ -101,6 +108,7 @@ def handle_send(req, res):
 
         else:
             res['response']['text'] += 'Я жду подтверджения отправки воды. Скажите да, нет, отмена.'
+            return
 
     if [t for t in tokens if t in ['передай',
                                    'отправь',
@@ -145,8 +153,8 @@ def handle_send(req, res):
             res['response']['text'] = 'Я не шмогла.'
 
     else:
-        ya_num = filter(lambda x: x['type'] == 'YANDEX.NUMBER',
-                                req['request']['nlu']['entities'])
+        ya_num = list(filter(lambda x: x['type'] == 'YANDEX.NUMBER',
+                                req['request']['nlu']['entities']))
 
         cold, hot = read_user_watercounters(user_id)
 
@@ -169,4 +177,4 @@ def handle_send(req, res):
             res['response']['text'] += 'Назовите воду и значение или спросите текущие показания'
 
     if not res['response']['text']:
-        res['response']['text'] = 'Я вас не понимаю'
+        res['response']['text'] = 'Я тебя не понимаю'

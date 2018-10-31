@@ -5,7 +5,7 @@ import json
 import traceback
 from flask import Flask, request, render_template
 from dialog import handle_dialog, pp
-from mos_api import mos_api
+from mos_api import api
 from emp_mos_api import AuthException
 from storage import db
 from logger import log
@@ -50,8 +50,8 @@ def mos_login_page(user_id):
         try:
             username = request.form.get('username')
             password = request.form.get('password')
-            client = mos_api.client(user_id)
-            client.login(username, password, user_id)
+            client = api.client(user_id)
+            client.login(username, password)
             db.set(user_id, 'username', username)
             db.set(user_id, 'password', password)
 
@@ -59,9 +59,11 @@ def mos_login_page(user_id):
             return render_template('mos_login_page.html', show_form=False,
                                    message='Успех! Теперь вы можете попросить Алису отправить показания')
         except AuthException as err:
+            log.error('{}'.format(traceback.format_exc()))
             return render_template('mos_login_page.html', show_form=True, username=username,
                                    message='Ошибка авторизации')
         except Exception as err:
+            log.error('{}'.format(traceback.format_exc()))
             return render_template('mos_login_page.html', show_form=True, username=username,
                                    message='Ошибка сервера')
 
