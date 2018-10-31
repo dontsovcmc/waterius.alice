@@ -7,9 +7,9 @@
 - удалить данные для авторизации ("Удали")
 
 # Зависимости
-[Flask](https://github.com/pallets/flask) - веб фреймворк
-[emp_mos_api](https://github.com/dontsovcmc/emp_mos_api) - клиент к Единой мобильной платформе г. Москвы
-nose - для запуска юниттестов
+- [Flask](https://github.com/pallets/flask) - веб фреймворк
+- [emp_mos_api](https://github.com/dontsovcmc/emp_mos_api) - клиент к Единой мобильной платформе г. Москвы
+- nose - для запуска юниттестов
 # Ссылки
-[Протокол работы Яндекс.диалогов с внешними сервисами](https://tech.yandex.ru/dialogs/alice/doc/protocol-docpage)
-[Единая мобильная платформа г. Москвы](http://mosapps.mos.ru/dev)
+- [Протокол работы Яндекс.диалогов с внешними сервисами](https://tech.yandex.ru/dialogs/alice/doc/protocol-docpage)
+- [Единая мобильная платформа г. Москвы](http://mosapps.mos.ru/dev)
