@@ -6,9 +6,9 @@ import traceback
 from flask import Flask, request, render_template, send_from_directory
 import random
 import settings
-from dialog import handle_dialog, pp
+from dialog import handle_dialog, pp, auth_button
 from mos_api import api
-from emp_mos_api import AuthException
+from emp_mos_api import AuthException, EmpServerException
 from storage import db
 from logger import log
 
@@ -30,6 +30,19 @@ def main():
 
     try:
         handle_dialog(request.json, response)
+
+    except AuthException as err:
+        log.error(err)
+        user_id = request.json['session']['user_id']
+        response['response']['text'] += 'Что-то не то с авторизацией. Повтори ее.'
+        response['response']['buttons'] = [auth_button(user_id)]
+
+    except EmpServerException as err:
+        log.error('{}'.format(traceback.format_exc()))
+        response['response']['text'] = 'Госуслуги тупят, повтори позднее'
+
+        log.error('Response: %r', pp.pprint(response))
+
     except Exception as err:
         log.error('{}'.format(traceback.format_exc()))
         response['response']['text'] = 'Что-то пошло не так'
@@ -84,10 +97,6 @@ def mos_login_page(user_id):
 def alice_login():
     random_id = random.randint(100000, 999999)
     return handle_login_page(random_id, True)
-
-#@app.route('/alice-webhook/<path:path>')
-#def send_static(path):
-#    return send_from_directory('static', path)
 
 
 if __name__ == '__main__':

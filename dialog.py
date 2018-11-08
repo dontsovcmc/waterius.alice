@@ -138,33 +138,24 @@ def handle_send(req, res):
                                      'произнеси',
                                      'поделись',
                                      'показывает']]:
-        try:
-            cold, hot = read_user_watercounters(user_id)
+        cold, hot = read_user_watercounters(user_id)
 
-            if hot and has_hot(tokens):
+        if hot and has_hot(tokens):
+            res['response']['text'] += '{} {}\n'.format(Water.name(hot[0]['type']),
+                                                        Watercounter.last_value(hot[0]))
+        elif cold and has_cold(tokens):
+            res['response']['text'] += '{} {}\n'.format(Water.name(cold[0]['type']),
+                                                        Watercounter.last_value(cold[0]))
+        else:
+            if hot:
                 res['response']['text'] += '{} {}\n'.format(Water.name(hot[0]['type']),
                                                             Watercounter.last_value(hot[0]))
-            elif cold and has_cold(tokens):
+            if cold:
                 res['response']['text'] += '{} {}\n'.format(Water.name(cold[0]['type']),
                                                             Watercounter.last_value(cold[0]))
-            else:
-                if hot:
-                    res['response']['text'] += '{} {}\n'.format(Water.name(hot[0]['type']),
-                                                                Watercounter.last_value(hot[0]))
-                if cold:
-                    res['response']['text'] += '{} {}\n'.format(Water.name(cold[0]['type']),
-                                                                Watercounter.last_value(cold[0]))
 
-            if not hot and not cold:
-                res['response']['text'] += 'Добавь в приложение счетчики'
-
-        except AuthException as err:
-            log.error(err)
-            res['response']['text'] += 'Что-то не то с авторизацией. Повтори ее.'
-            res['response']['buttons'] = [auth_button(user_id)]
-        except Exception as err:
-            log.error('{}'.format(traceback.format_exc()))
-            res['response']['text'] = 'Я не шмогла.'
+        if not hot and not cold:
+            res['response']['text'] += 'Добавь в приложение счетчики'
 
     else:
         ya_num = list(filter(lambda x: x['type'] == 'YANDEX.NUMBER',
