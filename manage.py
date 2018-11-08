@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 import traceback
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, send_from_directory
 import random
 import settings
 from dialog import handle_dialog, pp
@@ -13,7 +13,7 @@ from storage import db
 from logger import log
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/alice-webhook/static')
 
 
 @app.route("/alice-webhook", methods=['POST'])
@@ -60,7 +60,7 @@ def handle_login_page(user_id, random_id):
 
             if random_id:
                 return render_template('mos_login_page.html', show_form=False,
-                                       message='Успех! Назовите Алисе код: {} в течении минуты'.format(user_id))
+                                       message='Успех! Назовите Алисе код: {}'.format(user_id))
             else:
                 return render_template('mos_login_page.html', show_form=False,
                                        message='Успех! Теперь вы можете попросить Алису отправить показания')
@@ -68,11 +68,11 @@ def handle_login_page(user_id, random_id):
         except AuthException as err:
             log.error('{}'.format(traceback.format_exc()))
             return render_template('mos_login_page.html', show_form=True, username=username,
-                                   message='Ошибка авторизации')
+                                   error='Ошибка авторизации')
         except Exception as err:
             log.error('{}'.format(traceback.format_exc()))
             return render_template('mos_login_page.html', show_form=True, username=username,
-                                   message='Ошибка сервера')
+                                   error='Ошибка сервера')
 
 
 @app.route("/alice-webhook/mos_login_page/<user_id>", methods=['GET', 'POST'])
@@ -84,6 +84,10 @@ def mos_login_page(user_id):
 def alice_login():
     random_id = random.randint(100000, 999999)
     return handle_login_page(random_id, True)
+
+#@app.route('/alice-webhook/<path:path>')
+#def send_static(path):
+#    return send_from_directory('static', path)
 
 
 if __name__ == '__main__':
