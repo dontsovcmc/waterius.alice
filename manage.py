@@ -4,12 +4,14 @@ from __future__ import unicode_literals
 import json
 import traceback
 from flask import Flask, request, render_template
+import random
+import settings
 from dialog import handle_dialog, pp
 from mos_api import api
 from emp_mos_api import AuthException
 from storage import db
 from logger import log
-import settings
+
 
 app = Flask(__name__)
 
@@ -32,7 +34,7 @@ def main():
         log.error('{}'.format(traceback.format_exc()))
         response['response']['text'] = 'Что-то пошло не так'
 
-        log.info('Response: %r', pp.pprint(response))
+        log.error('Response: %r', pp.pprint(response))
 
     return json.dumps(
         response,
@@ -41,8 +43,7 @@ def main():
     )
 
 
-@app.route("/alice-webhook/mos_login_page/<user_id>", methods=['GET', 'POST'])
-def mos_login_page(user_id):
+def handle_login_page(user_id, random_id):
     if request.method == 'GET':
         return render_template('mos_login_page.html', show_form=True)
 
@@ -55,9 +56,15 @@ def mos_login_page(user_id):
             db.set(user_id, 'username', username)
             db.set(user_id, 'password', password)
 
-            #client.logout(user_id)
-            return render_template('mos_login_page.html', show_form=False,
-                                   message='Успех! Теперь вы можете попросить Алису отправить показания')
+            # client.logout(user_id)
+
+            if random_id:
+                return render_template('mos_login_page.html', show_form=False,
+                                       message='Успех! Назовите Алисе код: {} в течении минуты'.format(user_id))
+            else:
+                return render_template('mos_login_page.html', show_form=False,
+                                       message='Успех! Теперь вы можете попросить Алису отправить показания')
+
         except AuthException as err:
             log.error('{}'.format(traceback.format_exc()))
             return render_template('mos_login_page.html', show_form=True, username=username,
@@ -66,6 +73,17 @@ def mos_login_page(user_id):
             log.error('{}'.format(traceback.format_exc()))
             return render_template('mos_login_page.html', show_form=True, username=username,
                                    message='Ошибка сервера')
+
+
+@app.route("/alice-webhook/mos_login_page/<user_id>", methods=['GET', 'POST'])
+def mos_login_page(user_id):
+    return handle_login_page(user_id, False)
+
+
+@app.route("/alice-login", methods=['GET', 'POST'])
+def alice_login():
+    random_id = random.randint(100000, 999999)
+    return handle_login_page(random_id, True)
 
 
 if __name__ == '__main__':

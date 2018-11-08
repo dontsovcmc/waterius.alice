@@ -1,15 +1,13 @@
-# coding: utf-8
-from __future__ import unicode_literals
 
-from requests import post, session
 import traceback
-from logger import log
 import pprint
+import settings
+from logger import log
 from mos_api import api
 from emp_mos_api import AuthException, Water, Watercounter
-import settings
 
 pp = pprint.PrettyPrinter(indent=4)
+
 
 # Хранилище данных о пользователях.
 from storage import db
@@ -48,8 +46,25 @@ def handle_dialog(req, res):
         res['response']['text'] = 'Я удалила ваши данные'
         return
 
+    # Если пользователь не авторизирован в госуслугах,
+    # проверим, что он произнес кодовое слово
     if not db.get_username(user_id) or not db.get_password(user_id):
-        res['response']['text'] += 'Я должна знать твой логин и пароль. Нажми на кнопку и авторизируйся.'
+        try:
+            random_id = int(''.join(tokens))
+            if 100000 <= random_id <= 999999:
+                username = db.get_username(random_id)
+                password = db.get_password(random_id)
+                if username and password:
+                    db.set_username(user_id, username)
+                    db.set_password(user_id, password)
+                    db.clean(random_id)
+
+        except Exception as err:
+            pass
+
+    if not db.get_username(user_id) or not db.get_password(user_id):
+        res['response']['text'] += 'Я не знаю твои логин и пароль. ' \
+                                   'Нажми на кнопку или произнеси кодовое слово для авторизации.'
         res['response']['buttons'] = [auth_button(user_id)]
         return
     else:
@@ -82,7 +97,6 @@ def read_user_watercounters(user_id):
         return cold, hot
     else:
         return None, None
-
 
 
 def handle_send(req, res):
